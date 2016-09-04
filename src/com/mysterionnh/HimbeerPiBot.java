@@ -1,32 +1,30 @@
 package com.mysterionnh;
 
-import twitter4j.Twitter;
-import twitter4j.DirectMessage;
-import twitter4j.ResponseList;
-import twitter4j.TwitterException;
-import twitter4j.TwitterFactory;
+import twitter4j.*;
 
 import java.io.*;
 
-import java.nio.charset.Charset;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Paths;
+import java.nio.charset.Charset;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class HimbeerPiBot {
 
     // TODO: Add lookup for twitterCommands.sh, may even make it relative
-    // TODO: Not fail safe. Incorrect commands may lead to crashes (mail, exec etc.). Also no fail-safe against xss
+    // TODO: Not fail-safe against xss
     // TODO: Mails still end in "-e" and show the quotes they were made with
     // TODO: exec not working
+    // TODO: output of bash commands is not returned/no default output for bash commands with no output
+    // TODO: (bash) mail sometimes fails when files attached are to large (I guess)
 
     private static final String version = "0.1.9 - closed beta";
 
@@ -40,7 +38,6 @@ public class HimbeerPiBot {
     private static Twitter twitter;
 
     public static void main(String... args) throws TwitterException {
-
         iniBot();
 
         doScheduledTasks();
@@ -206,6 +203,9 @@ public class HimbeerPiBot {
 
         log(System.getProperty("line.separator") + "--- New Session ---" + System.getProperty("line.separator"));
 
+        // dump API limits to log
+        // dumpApiLimits();
+
         // Message me about new start, regardless of cause
         twitter.sendDirectMessage("MysterionNH", "I just went online (likely the Pi rebooted, or, worst case, I was " +
                 "started manually. If that's case, I'm going to reply twice. To fix, reboot.)");
@@ -303,6 +303,12 @@ public class HimbeerPiBot {
             e.printStackTrace();
         }
         return builder.toString();
+    }
+
+    private static void dumpApiLimits() throws TwitterException{
+        for (Map.Entry e : twitter.getRateLimitStatus().entrySet()) {
+            log(e.getKey().toString() + ":" + ((RateLimitStatus)e.getValue()).getRemaining());
+        }
     }
 
     private static void log(String text) {
